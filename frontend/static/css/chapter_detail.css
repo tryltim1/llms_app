@@ -1,0 +1,6 @@
+/* Styles for chapter_detail.html */
+.section-list { margin-top: 2rem; }
+.section-card { border-radius: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+.hero { background: #f8f9fa; }
+.empty-state { color: #888; }
+.search-filter-bar { margin-bottom: 2rem; }

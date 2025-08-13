@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}ScriptScope - Admin Access{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-gradient shadow-lg fade-in">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-shield fa-3x text-gradient mb-3"></i>
+                        <h2 class="card-title text-gradient">Admin Authentication</h2>
+                        <p class="text-muted">Manage educational content and users</p>
+                    </div>
+
+                    <!-- Auth Tabs -->
+                    <ul class="nav nav-tabs mb-4" id="adminAuthTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="admin-login-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#admin-login" type="button" role="tab">
+                                <i class="fas fa-sign-in-alt me-1"></i>Admin Login
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="admin-register-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#admin-register" type="button" role="tab">
+                                <i class="fas fa-user-plus me-1"></i>Admin Register
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="adminAuthTabContent">
+                        <!-- Admin Login Tab -->
+                        <div class="tab-pane fade show active" id="admin-login" role="tabpanel">
+                            <form method="POST" class="needs-validation" novalidate>
+                                <input type="hidden" name="action" value="admin_login">
+                                
+                                <div class="form-floating mb-3">
+                                    <input type="email" class="form-control" id="adminLoginEmail" name="email" 
+                                           placeholder="name@example.com" required>
+                                    <label for="adminLoginEmail">
+                                        <i class="fas fa-envelope me-1"></i>Admin Email
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid email address.
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mb-4">
+                                    <input type="password" class="form-control" id="adminLoginPassword" name="password" 
+                                           placeholder="Password" required>
+                                    <label for="adminLoginPassword">
+                                        <i class="fas fa-lock me-1"></i>Admin Password
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        Please provide your password.
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 py-3">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Sign In as Admin
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Admin Register Tab -->
+                        <div class="tab-pane fade" id="admin-register" role="tabpanel">
+                            <form method="POST" class="needs-validation" novalidate>
+                                <input type="hidden" name="action" value="register">
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="adminFirstName" name="first_name" 
+                                                   placeholder="First Name" required>
+                                            <label for="adminFirstName">
+                                                <i class="fas fa-user me-1"></i>First Name
+                                            </label>
+                                            <div class="invalid-feedback">
+                                                Please provide your first name.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="adminLastName" name="last_name" 
+                                                   placeholder="Last Name" required>
+                                            <label for="adminLastName">
+                                                <i class="fas fa-user me-1"></i>Last Name
+                                            </label>
+                                            <div class="invalid-feedback">
+                                                Please provide your last name.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input type="email" class="form-control" id="adminRegisterEmail" name="email" 
+                                           placeholder="name@example.com" required>
+                                    <label for="adminRegisterEmail">
+                                        <i class="fas fa-envelope me-1"></i>Admin Email
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid email address.
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Default Admin Password:</strong> Admin@123
+                                    <br><small class="text-muted">This password is automatically set for all admin accounts.</small>
+                                </div>
+
+                                <button type="submit" class="btn btn-success w-100 py-3">
+                                    <i class="fas fa-user-shield me-2"></i>Create Admin Account
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <p class="text-muted">
+                            Regular user? 
+                            <a href="{{ url_for('routes_bp.login') }}" class="text-decoration-none">
+                                <i class="fas fa-user me-1"></i>User Login
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Form validation
+(function() {
+    'use strict';
+    
+    const forms = document.querySelectorAll('.needs-validation');
+    
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+
+// Enhanced form interactions
+document.addEventListener('DOMContentLoaded', function() {
+    const floatingInputs = document.querySelectorAll('.form-floating input');
+    floatingInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            if (!this.value) {
+                this.parentElement.classList.remove('focused');
+            }
+        });
+    });
+    
+    // Add visual feedback for admin registration
+    const adminRegisterForm = document.querySelector('#admin-register form');
+    if (adminRegisterForm) {
+        adminRegisterForm.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (this.checkValidity()) {
+                submitBtn.innerHTML = '<span class="loading"></span> Creating Account...';
+                submitBtn.disabled = true;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

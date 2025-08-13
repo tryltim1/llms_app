@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Chapter - ScriptScope{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Edit Chapter</h4>
+                </div>
+                <div class="card-body">
+                    <form id="editChapterForm">
+                        <div class="mb-3">
+                            <label for="editChapterSelect" class="form-label">Select Chapter</label>
+                            <select class="form-select" id="editChapterSelect" name="chapter_id" required>
+                                <option value="">Choose a chapter...</option>
+                                {% for chapter in chapters %}
+                                <option value="{{ chapter.id }}">{{ chapter.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editChapterName" class="form-label">Chapter Name</label>
+                            <input type="text" class="form-control" id="editChapterName" name="name" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const select = document.getElementById('editChapterSelect');
+const nameInput = document.getElementById('editChapterName');
+select.onchange = function() {
+    nameInput.value = select.options[select.selectedIndex].text;
+};
+document.getElementById('editChapterForm').onsubmit = async function(e) {
+    e.preventDefault();
+    const chapter_id = select.value;
+    const name = nameInput.value;
+    const res = await fetch(`/api/chapters/${chapter_id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (data.success) {
+        window.location.href = '/admin/dashboard';
+    } else {
+        alert(data.message || 'Failed to update chapter');
+    }
+};
+</script>
+{% endblock %}

@@ -1,0 +1,551 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - ScriptScope{% endblock %}
+
+{% block extra_head %}
+<!-- Quill Editor CSS -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Dashboard Header -->
+    <div class="hero mb-4" style="padding: 2rem; border-radius: 1rem;">
+        <div class="text-center">
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-tachometer-alt me-3"></i>Admin Dashboard
+            </h1>
+            <p class="lead">Manage educational content, chapters, and sections</p>
+            <p class="text-muted">
+                Welcome back, <strong>{{ session.user_name }}</strong>!
+            </p>
+        </div>
+    </div>
+
+    <!-- Navigation Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('routes_bp.index') }}" class="text-decoration-none">
+                    <i class="fas fa-home me-1"></i>Home
+                </a>
+            </li>
+            <li class="breadcrumb-item active">Admin Dashboard</li>
+        </ol>
+    </nav>
+
+    <!-- Admin Tabs -->
+    <div class="admin-tabs">
+        <div class="admin-tab-header">
+            <button class="admin-tab-btn active" data-tab="chapters" onclick="switchAdminTab('chapters')">
+                <i class="fas fa-book me-2"></i>Chapters Management
+            </button>
+            <button class="admin-tab-btn" data-tab="sections" onclick="switchAdminTab('sections')">
+                <i class="fas fa-file-alt me-2"></i>Sections Management
+            </button>
+        </div>
+
+        <!-- Chapters Tab -->
+        <div id="chaptersTab" class="admin-tab-content">
+            <div class="admin-actions">
+                <a href="{{ url_for('routes_bp.create_chapter_form') }}" class="admin-action-btn text-decoration-none">
+                    <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                    <div>Create New Chapter</div>
+                    <small class="text-muted">Add a new chapter to organize content</small>
+                </a>
+                <a href="{{ url_for('routes_bp.edit_chapter_form') }}" class="admin-action-btn text-decoration-none">
+                    <i class="fas fa-edit fa-2x mb-2"></i>
+                    <div>Edit Chapter</div>
+                    <small class="text-muted">Modify existing chapter details</small>
+                </a>
+                <a href="{{ url_for('routes_bp.delete_chapter_form') }}" class="admin-action-btn text-decoration-none">
+                    <i class="fas fa-trash-alt fa-2x mb-2"></i>
+                    <div>Delete Chapter</div>
+                    <small class="text-muted">Remove chapter and all its sections</small>
+                </a>
+            </div>
+
+            <!-- Chapters List -->
+            <div class="mt-4">
+                <h4 class="mb-3">
+                    <i class="fas fa-list me-2"></i>Your Chapters ({{ chapters|length }})
+                </h4>
+                {% if chapters %}
+                <div class="row">
+                    {% for chapter in chapters %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card fade-in" style="animation-delay: {{ loop.index0 * 0.1 }}s">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-book me-1"></i>{{ chapter.name }}
+                                </h6>
+                                <p class="card-text text-muted small">
+                                    <i class="fas fa-calendar me-1"></i>{{ chapter.created_at.strftime('%b %d, %Y') }}
+                                </p>
+                                <p class="card-text text-muted small">
+                                    <i class="fas fa-file-alt me-1"></i>{{ chapter.sections|length }} sections
+                                </p>
+                                <div class="d-flex gap-1">
+                                    <a href="{{ url_for('routes_bp.chapter_detail', chapter_id=chapter.id) }}" 
+                                       class="btn btn-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button class="btn btn-outline-secondary btn-sm" 
+                                            onclick="editChapterQuick({{ chapter.id }}, '{{ chapter.name }}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" 
+                                            onclick="showConfirmDelete('chapter', {{ chapter.id }}, '{{ chapter.name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                    <h5>No chapters created yet</h5>
+                    <p class="text-muted">Create your first chapter to get started.</p>
+                    <button class="btn btn-primary" onclick="document.getElementById('createChapterBtn').click()">
+                        <i class="fas fa-plus me-2"></i>Create First Chapter
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sections Tab -->
+        <div id="sectionsTab" class="admin-tab-content d-none">
+            <div class="admin-actions">
+                <a href="{{ url_for('routes_bp.create_section_form') }}" class="admin-action-btn text-decoration-none">
+                    <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                    <div>Create New Section</div>
+                    <small class="text-muted">Add a new section to a chapter</small>
+                </a>
+                <a href="{{ url_for('routes_bp.edit_section_form') }}" class="admin-action-btn text-decoration-none">
+                    <i class="fas fa-edit fa-2x mb-2"></i>
+                    <div>Edit Section</div>
+                    <small class="text-muted">Modify section content and details</small>
+                </a>
+                <a href="{{ url_for('routes_bp.delete_section_form') }}" class="admin-action-btn text-decoration-none">
+                    <i class="fas fa-trash-alt fa-2x mb-2"></i>
+                    <div>Delete Section</div>
+                    <small class="text-muted">Remove section from chapter</small>
+                </a>
+            </div>
+
+            <!-- Sections List -->
+            <div class="mt-4">
+                <h4 class="mb-3">
+                    <i class="fas fa-list me-2"></i>All Sections ({{ sections|length }})
+                </h4>
+                {% if sections %}
+                <div class="row">
+                    {% for section in sections %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card fade-in" style="animation-delay: {{ loop.index0 * 0.1 }}s">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-file-alt me-1"></i>{{ section.name }}
+                                </h6>
+                                <p class="card-text text-muted small">
+                                    <i class="fas fa-book me-1"></i>{{ section.chapter.name }}
+                                </p>
+                                <p class="card-text text-muted small">
+                                    <i class="fas fa-calendar me-1"></i>{{ section.created_at.strftime('%b %d, %Y') }}
+                                </p>
+                                <div class="d-flex gap-1">
+                                    <a href="{{ url_for('routes_bp.section_detail', chapter_id=section.chapter.id, section_id=section.id) }}" 
+                                       class="btn btn-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button class="btn btn-outline-secondary btn-sm" 
+                                            onclick="editSectionQuick({{ section.id }}, '{{ section.name }}', {{ section.chapter.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" 
+                                            onclick="showConfirmDelete('section', {{ section.id }}, '{{ section.name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <h5>No sections created yet</h5>
+                    <p class="text-muted">Create your first section within a chapter.</p>
+                    {% if chapters %}
+                    <button class="btn btn-primary" onclick="document.getElementById('createSectionBtn').click()">
+                        <i class="fas fa-plus me-2"></i>Create First Section
+                    </button>
+                    {% else %}
+                    <p class="text-muted">You need to create a chapter first.</p>
+                    <button class="btn btn-primary" onclick="switchAdminTab('chapters')">
+                        <i class="fas fa-book me-2"></i>Create Chapter First
+                    </button>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Edit Chapter Modal -->
+<div class="modal fade" id="editChapterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Edit Chapter
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editChapterForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editChapterSelect" class="form-label fw-semibold">Select Chapter</label>
+                        <select id="editChapterSelect" name="chapter_id" class="form-select searchable-select" required>
+                            <option value="">Choose a chapter to edit...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editChapterName" class="form-label fw-semibold">Chapter Name</label>
+                        <input type="text" id="editChapterName" name="name" class="form-control" 
+                               placeholder="Enter new chapter name..." required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Chapter Modal -->
+<div class="modal fade" id="deleteChapterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash-alt me-2"></i>Delete Chapter
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="deleteChapterSelect" class="form-label fw-semibold">Select Chapter to Delete</label>
+                    <select id="deleteChapterSelect" class="form-select searchable-select" required>
+                        <option value="">Choose a chapter to delete...</option>
+                    </select>
+                    <div class="form-text text-danger">
+                        <i class="fas fa-exclamation-triangle me-1"></i>This will also delete all sections within the chapter.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button id="confirmDeleteBtn" class="btn btn-danger" 
+                        onclick="confirmChapterDelete()">
+                    <i class="fas fa-trash me-1"></i>Delete Chapter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Section Modal -->
+<div class="modal fade" id="createSectionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Create New Section
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createSectionForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="createSectionChapterSelect" class="form-label fw-semibold">Select Chapter</label>
+                        <select id="createSectionChapterSelect" name="chapter_id" class="form-select chapter-select searchable-select" required>
+                            <option value="">Choose a chapter...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="createSectionName" class="form-label fw-semibold">Section Name</label>
+                        <input type="text" id="createSectionName" name="name" class="form-control" 
+                               placeholder="Enter section name..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="createSectionContent" class="form-label fw-semibold">Section Content</label>
+                        <div id="createSectionContent" style="height: 300px;"></div>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>Use the rich text editor to format your content.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>Create Section
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Section Modal -->
+<div class="modal fade" id="editSectionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Edit Section
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editSectionForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editSectionChapterSelect" class="form-label fw-semibold">Select Chapter</label>
+                        <select id="editSectionChapterSelect" class="form-select chapter-select section-chapter-select searchable-select" 
+                                data-section-select="editSectionSelect" required>
+                            <option value="">Choose a chapter...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editSectionSelect" class="form-label fw-semibold">Select Section</label>
+                        <select id="editSectionSelect" name="section_id" class="form-select searchable-select" required>
+                            <option value="">Choose a section to edit...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editSectionName" class="form-label fw-semibold">Section Name</label>
+                        <input type="text" id="editSectionName" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editSectionContent" class="form-label fw-semibold">Section Content</label>
+                        <div id="editSectionContent" style="height: 300px;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Section Modal -->
+<div class="modal fade" id="deleteSectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash-alt me-2"></i>Delete Section
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="deleteSectionChapterSelect" class="form-label fw-semibold">Select Chapter</label>
+                    <select id="deleteSectionChapterSelect" class="form-select chapter-select section-chapter-select searchable-select" 
+                            data-section-select="deleteSectionSelect" required>
+                        <option value="">Choose a chapter...</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="deleteSectionSelect" class="form-label fw-semibold">Select Section to Delete</label>
+                    <select id="deleteSectionSelect" class="form-select searchable-select" required>
+                        <option value="">Choose a section to delete...</option>
+                    </select>
+                    <div class="form-text text-danger">
+                        <i class="fas fa-exclamation-triangle me-1"></i>This action cannot be undone.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button id="confirmDeleteSectionBtn" class="btn btn-danger" 
+                        onclick="confirmSectionDelete()">
+                    <i class="fas fa-trash me-1"></i>Delete Section
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button id="confirmDeleteActionBtn" class="btn btn-danger">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Quill Editor JS -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<script>
+function switchAdminTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.admin-tab-content').forEach(tab => {
+        tab.classList.add('d-none');
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab
+    const selectedTab = document.getElementById(tabName + 'Tab');
+    if (selectedTab) {
+        selectedTab.classList.remove('d-none');
+    }
+    
+    // Add active class to selected button
+    const selectedBtn = document.querySelector(`[data-tab="${tabName}"]`);
+    if (selectedBtn) {
+        selectedBtn.classList.add('active');
+    }
+}
+
+function editChapterQuick(chapterId, chapterName) {
+    const modal = document.getElementById('editChapterModal');
+    const select = document.getElementById('editChapterSelect');
+    const nameInput = document.getElementById('editChapterName');
+    
+    // Set the chapter in the select
+    select.value = chapterId;
+    nameInput.value = chapterName;
+    
+    // Show the modal
+    const editModal = new bootstrap.Modal(modal);
+    editModal.show();
+}
+
+function editSectionQuick(sectionId, sectionName, chapterId) {
+    const modal = document.getElementById('editSectionModal');
+    const chapterSelect = document.getElementById('editSectionChapterSelect');
+    const sectionSelect = document.getElementById('editSectionSelect');
+    const nameInput = document.getElementById('editSectionName');
+    // Quill editor instance for edit section
+    if (!window.quillEditSection) {
+        window.quillEditSection = new Quill('#editSectionContent', {
+            theme: 'snow'
+        });
+    }
+    // Set the chapter first
+    chapterSelect.value = chapterId;
+    // Load sections for the chapter, then set the section and fetch content
+    window.scriptScopeApp.loadSectionsForChapter(chapterId, 'editSectionSelect').then(() => {
+        sectionSelect.value = sectionId;
+        nameInput.value = sectionName;
+        // Fetch section content from backend API and set Quill content
+        fetch(`/api/section/${sectionId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.description) {
+                    window.quillEditSection.root.innerHTML = data.description;
+                } else {
+                    window.quillEditSection.root.innerHTML = '';
+                }
+            })
+            .catch(() => {
+                window.quillEditSection.root.innerHTML = '';
+            });
+    });
+    // Show the modal
+    const editModal = new bootstrap.Modal(modal);
+    editModal.show();
+}
+
+function confirmChapterDelete() {
+    const chapterId = document.getElementById('deleteChapterSelect').value;
+    const chapterName = document.getElementById('deleteChapterSelect').selectedOptions[0]?.textContent;
+    
+    if (!chapterId) {
+        window.scriptScopeApp.showToast('Please select a chapter to delete', 'error');
+        return;
+    }
+    
+    showConfirmDelete('chapter', chapterId, chapterName);
+}
+
+function confirmSectionDelete() {
+    const sectionId = document.getElementById('deleteSectionSelect').value;
+    const sectionName = document.getElementById('deleteSectionSelect').selectedOptions[0]?.textContent;
+    
+    if (!sectionId) {
+        window.scriptScopeApp.showToast('Please select a section to delete', 'error');
+        return;
+    }
+    
+    showConfirmDelete('section', sectionId, sectionName);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Add animation delays to cards
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
+    
+    // Enhanced tab switching with animations
+    const tabButtons = document.querySelectorAll('.admin-tab-btn');
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            switchAdminTab(tabName);
+        });
+    });
+});
+</script>
+{% endblock %}

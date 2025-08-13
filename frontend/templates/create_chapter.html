@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Create Chapter - ScriptScope{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Create New Chapter</h4>
+                </div>
+                <div class="card-body">
+                    <form id="createChapterForm">
+                        <div class="mb-3">
+                            <label for="chapterName" class="form-label">Chapter Name</label>
+                            <input type="text" class="form-control" id="chapterName" name="name" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Create Chapter</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('createChapterForm').onsubmit = async function(e) {
+    e.preventDefault();
+    const name = document.getElementById('chapterName').value;
+    const res = await fetch('/api/chapters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (data.success) {
+        window.location.href = '/admin/dashboard';
+    } else {
+        alert(data.message || 'Failed to create chapter');
+    }
+};
+</script>
+{% endblock %}

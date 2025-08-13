@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}ScriptScope - User Login{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-gradient shadow-lg fade-in">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-circle fa-3x text-gradient mb-3"></i>
+                        <h2 class="card-title text-gradient">User Authentication</h2>
+                        <p class="text-muted">Access your learning dashboard</p>
+                    </div>
+
+                    <!-- Auth Tabs -->
+                    <ul class="nav nav-tabs mb-4" id="authTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#login" type="button" role="tab">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="register-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#register" type="button" role="tab">
+                                <i class="fas fa-user-plus me-1"></i>Register
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="authTabContent">
+                        <!-- Login Tab -->
+                        <div class="tab-pane fade show active" id="login" role="tabpanel">
+                            <form method="POST" class="needs-validation" novalidate>
+                                <input type="hidden" name="action" value="login">
+                                
+                                <div class="form-floating mb-3">
+                                    <input type="email" class="form-control" id="loginEmail" name="email" 
+                                           placeholder="name@example.com" required>
+                                    <label for="loginEmail">
+                                        <i class="fas fa-envelope me-1"></i>Email Address
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid email address.
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mb-4">
+                                    <input type="password" class="form-control" id="loginPassword" name="password" 
+                                           placeholder="Password" required>
+                                    <label for="loginPassword">
+                                        <i class="fas fa-lock me-1"></i>Password
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        Please provide your password.
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 py-3">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Register Tab -->
+                        <div class="tab-pane fade" id="register" role="tabpanel">
+                            <form method="POST" class="needs-validation" novalidate>
+                                <input type="hidden" name="action" value="register">
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="firstName" name="first_name" 
+                                                   placeholder="First Name" required>
+                                            <label for="firstName">
+                                                <i class="fas fa-user me-1"></i>First Name
+                                            </label>
+                                            <div class="invalid-feedback">
+                                                Please provide your first name.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="lastName" name="last_name" 
+                                                   placeholder="Last Name" required>
+                                            <label for="lastName">
+                                                <i class="fas fa-user me-1"></i>Last Name
+                                            </label>
+                                            <div class="invalid-feedback">
+                                                Please provide your last name.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input type="email" class="form-control" id="registerEmail" name="email" 
+                                           placeholder="name@example.com" required>
+                                    <label for="registerEmail">
+                                        <i class="fas fa-envelope me-1"></i>Email Address
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid email address.
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mb-4">
+                                    <input type="password" class="form-control" id="registerPassword" name="password" 
+                                           placeholder="Password" minlength="6" required>
+                                    <label for="registerPassword">
+                                        <i class="fas fa-lock me-1"></i>Password
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        Password must be at least 6 characters long.
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-success w-100 py-3">
+                                    <i class="fas fa-user-plus me-2"></i>Create Account
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <p class="text-muted">
+                            Need admin access? 
+                            <a href="{{ url_for('routes_bp.admin_auth') }}" class="text-decoration-none">
+                                <i class="fas fa-user-shield me-1"></i>Admin Login
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Form validation
+(function() {
+    'use strict';
+    
+    // Add custom validation styles
+    const forms = document.querySelectorAll('.needs-validation');
+    
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+
+// Enhanced form interactions
+document.addEventListener('DOMContentLoaded', function() {
+    // Focus enhancement for floating labels
+    const floatingInputs = document.querySelectorAll('.form-floating input');
+    floatingInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            if (!this.value) {
+                this.parentElement.classList.remove('focused');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

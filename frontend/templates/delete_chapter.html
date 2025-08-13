@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Chapter - ScriptScope{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Delete Chapter</h4>
+                </div>
+                <div class="card-body">
+                    <form id="deleteChapterForm">
+                        <div class="mb-3">
+                            <label for="deleteChapterSelect" class="form-label">Select Chapter to Delete</label>
+                            <select class="form-select" id="deleteChapterSelect" name="chapter_id" required>
+                                <option value="">Choose a chapter...</option>
+                                {% for chapter in chapters %}
+                                <option value="{{ chapter.id }}">{{ chapter.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text text-danger">
+                                <i class="fas fa-exclamation-triangle me-1"></i>This will also delete all sections within the chapter.
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100">Delete Chapter</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('deleteChapterForm').onsubmit = async function(e) {
+    e.preventDefault();
+    const chapter_id = document.getElementById('deleteChapterSelect').value;
+    if (!confirm('Are you sure you want to delete this chapter and all its sections?')) return;
+    const res = await fetch(`/api/chapters/${chapter_id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (data.success) {
+        window.location.href = '/admin/dashboard';
+    } else {
+        alert(data.message || 'Failed to delete chapter');
+    }
+};
+</script>
+{% endblock %}

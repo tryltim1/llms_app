@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Section - ScriptScope{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Edit Section</h4>
+                </div>
+                <div class="card-body">
+                    <form id="editSectionForm">
+                        <div class="mb-3">
+                            <label for="editSectionSelect" class="form-label">Select Section</label>
+                            <select class="form-select" id="editSectionSelect" name="section_id" required>
+                                <option value="">Choose a section...</option>
+                                {% for section in sections %}
+                                <option value="{{ section.id }}">{{ section.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editSectionName" class="form-label">Section Name</label>
+                            <input type="text" class="form-control" id="editSectionName" name="name" required>
+                        </div>
+                                                <div class="mb-3">
+                                                        <label class="form-label">Section Description</label>
+                                                        <link href="/styles.css" rel="stylesheet" />
+                                                        <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+                                                        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+                                                        <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+                                                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+                                                        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+                                                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+
+                                                        <div id="toolbar-container">
+                                                            <span class="ql-formats">
+                                                                <select class="ql-font"></select>
+                                                                <select class="ql-size"></select>
+                                                            </span>
+                                                            <span class="ql-formats">
+                                                                <button class="ql-bold"></button>
+                                                                <button class="ql-italic"></button>
+                                                                <button class="ql-underline"></button>
+                                                                <button class="ql-strike"></button>
+                                                            </span>
+                                                            <span class="ql-formats">
+                                                                <select class="ql-color"></select>
+                                                                <select class="ql-background"></select>
+                                                            </span>
+                                                            <span class="ql-formats">
+                                                                <button class="ql-script" value="sub"></button>
+                                                                <button class="ql-script" value="super"></button>
+                                                            </span>
+                                                            <span class="ql-formats">
+                                                                <button class="ql-header" value="1"></button>
+                                                                <button class="ql-header" value="2"></button>
+                                                                <button class="ql-blockquote"></button>
+                                                                <button class="ql-code-block"></button>
+                                                            </span>
+                                                            <span class="ql-formats">
+                                                                <button class="ql-list" value="ordered"></button>
+                                                                <button class="ql-list" value="bullet"></button>
+                                                                <button class="ql-indent" value="-1"></button>
+                                                                <button class="ql-indent" value="+1"></button>
+                                                            </span>
+                                                            <span class="ql-formats">
+                                                                <button class="ql-direction" value="rtl"></button>
+                                                                <select class="ql-align"></select>
+                                                            </span>
+                                                            <span class="ql-formats">
+                                                                <button class="ql-link"></button>
+                                                                <button class="ql-image"></button>
+                                                                <button class="ql-video"></button>
+                                                                <button class="ql-formula"></button>
+                                                            </span>
+                                                            <span class="ql-formats">
+                                                                <button class="ql-clean"></button>
+                                                            </span>
+                                                        </div>
+                                                        <div id="editor" style="height: 300px;"></div>
+                                                        <div class="form-text">
+                                                                <i class="fas fa-info-circle me-1"></i>Use the rich text editor to format your content.
+                                                        </div>
+                                                </div>
+                                                <input type="hidden" name="content" id="editSectionContent">
+                        <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const quill = new Quill('#editor', {
+        modules: {
+            syntax: true,
+            toolbar: '#toolbar-container',
+        },
+        placeholder: 'Edit section content...',
+        theme: 'snow',
+    });
+    const select = document.getElementById('editSectionSelect');
+    const nameInput = document.getElementById('editSectionName');
+    select.onchange = function() {
+        const sectionId = select.value;
+        const selected = select.options[select.selectedIndex];
+        nameInput.value = selected.text;
+        if (sectionId) {
+            // Fetch section content from backend and set Quill content
+            fetch(`/api/section/${sectionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.content) {
+                        quill.root.innerHTML = data.content;
+                    } else {
+                        quill.root.innerHTML = '';
+                    }
+                })
+                .catch(() => {
+                    quill.root.innerHTML = '';
+                });
+        } else {
+            quill.root.innerHTML = '';
+        }
+    };
+    document.getElementById('editSectionForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const sectionId = select.value;
+        const name = nameInput.value;
+        const content = quill.root.innerHTML;
+        console.log('Quill HTML:', content);
+        // For debugging: also log Quill delta and plain text
+        console.log('Quill Delta:', quill.getContents());
+        console.log('Quill Text:', quill.getText());
+        const res = await fetch(`/api/sections/${sectionId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, content })
+        });
+        const result = await res.json();
+        if (result.success) {
+            window.location.href = '/admin/dashboard';
+        } else {
+            alert(result.message || 'Failed to update section');
+        }
+    });
+</script>
+</script>
+{% endblock %}

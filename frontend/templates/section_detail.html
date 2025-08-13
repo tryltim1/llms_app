@@ -1,0 +1,263 @@
+{% extends "user_base.html" %}
+
+{% block title %}{{ section.name }} - {{ chapter.name }} - ScriptScope{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <div class="sidebar slide-in-left">
+                <div class="d-flex align-items-center mb-4">
+                    <i class="fas fa-book me-2 text-primary"></i>
+                    <h6 class="mb-0 fw-bold">{{ chapter.name }}</h6>
+                </div>
+                
+                <div class="mb-3">
+                    <small class="text-muted text-uppercase fw-semibold">All Sections</small>
+                </div>
+                
+                {% for s in all_sections %}
+                <div class="sidebar-item {{ 'active' if s.id == section.id else '' }}" 
+                     onclick="window.location.href='{{ url_for('routes_bp.section_detail', chapter_id=chapter.id, section_id=s.id) }}'">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-file-alt me-2"></i>
+                        <span class="flex-grow-1">{{ s.name }}</span>
+                        {% if s.id == section.id %}
+                        <i class="fas fa-arrow-right ms-2 text-primary"></i>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <div class="mt-4 pt-4 border-top">
+                    <a href="{{ url_for('routes_bp.chapter_detail', chapter_id=chapter.id) }}" 
+                       class="btn btn-outline-primary btn-sm w-100">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Chapter
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <!-- Navigation Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('routes_bp.index') }}" class="text-decoration-none">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('routes_bp.chapter_detail', chapter_id=chapter.id) }}" class="text-decoration-none">
+                            {{ chapter.name }}
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">{{ section.name }}</li>
+                </ol>
+            </nav>
+
+            <!-- Section Header -->
+            <div class="hero mb-4" style="padding: 2rem; border-radius: 1rem;">
+                <h1 class="display-6 fw-bold mb-2">{{ section.name }}</h1>
+                <p class="lead mb-3">
+                    <i class="fas fa-calendar me-2"></i>
+                    Created {% if section.created_at %}{{ section.created_at.strftime('%B %d, %Y') }}{% else %}N/A{% endif %}
+                    {% if section.updated_at and section.updated_at != section.created_at %}
+                    <span class="mx-3">•</span>
+                    <i class="fas fa-edit me-2"></i>Updated {{ section.updated_at.strftime('%B %d, %Y') }}
+                    {% endif %}
+                </p>
+                
+                {% if session.user_id %}
+                <div class="d-flex gap-3 flex-wrap">
+                    <button class="btn btn-outline-primary" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#commentModal"
+                            data-section-id="{{ section.id }}">
+                        <i class="fas fa-comments me-2"></i>View Comments ({{ comments|length }})
+                    </button>
+                    <button class="btn btn-success" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#addCommentModal"
+                            data-section-id="{{ section.id }}">
+                        <i class="fas fa-plus me-2"></i>Add Comment
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Section Content -->
+            <div class="section-content fade-in">
+                <div class="content-body">
+                    {{ section.content|safe }}
+                </div>
+            </div>
+
+            <!-- Navigation Between Sections -->
+            <div class="section-nav">
+                {% if prev_section %}
+                <a href="{{ url_for('routes_bp.section_detail', chapter_id=chapter.id, section_id=prev_section.id) }}" 
+                   class="btn btn-outline-primary">
+                    <i class="fas fa-chevron-left me-2"></i>Previous: {{ prev_section.name }}
+                </a>
+                {% else %}
+                <div></div>
+                {% endif %}
+
+                {% if next_section %}
+                <a href="{{ url_for('routes_bp.section_detail', chapter_id=chapter.id, section_id=next_section.id) }}" 
+                   class="btn btn-primary">
+                    Next: {{ next_section.name }}<i class="fas fa-chevron-right ms-2"></i>
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Comments Section -->
+            {% if session.user_id and comments %}
+            <div class="comments-section slide-in-right">
+                <h3 class="mb-4">
+                    <i class="fas fa-comments me-2"></i>Comments ({{ comments|length }})
+                </h3>
+                
+                {% for comment in comments %}
+                <div class="comment-item fade-in" style="animation-delay: {{ loop.index0 * 0.1 }}s">
+                    <div class="comment-author">
+                        <i class="fas fa-user-circle me-2"></i>{{ comment.user.full_name }}
+                    </div>
+                    <div class="comment-date">
+                        <i class="fas fa-clock me-1"></i>{{ comment.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    </div>
+                    <div class="comment-content">
+                        {{ comment.content }}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div class="text-center mt-4">
+                    <button class="btn btn-success" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#addCommentModal"
+                            data-section-id="{{ section.id }}">
+                        <i class="fas fa-plus me-2"></i>Add Your Comment
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if session.user_id %}
+<!-- Comment Modal -->
+<div class="modal fade" id="commentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-comments me-2"></i>Comments for "{{ section.name }}"
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="commentModalBody">
+                <div id="commentsContainer">
+                    <!-- Comments will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Comment Modal -->
+<div class="modal fade" id="addCommentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Add Comment to "{{ section.name }}"
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addCommentForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="commentContent" class="form-label fw-semibold">Your Comment</label>
+                        <textarea id="commentContent" name="content" class="form-control" rows="5" 
+                                  placeholder="Share your thoughts about this section..." required></textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>Your comment will be visible to all users.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-paper-plane me-1"></i>Submit Comment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Smooth scrolling for section navigation
+    const navLinks = document.querySelectorAll('.sidebar-item');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            // Add loading state
+            const icon = this.querySelector('i.fa-file-alt');
+            if (icon) {
+                icon.className = 'fas fa-spinner fa-spin me-2';
+            }
+        });
+    });
+
+    // Enhanced content formatting
+    const contentBody = document.querySelector('.content-body');
+    if (contentBody) {
+        // Format code blocks
+        const codeBlocks = contentBody.querySelectorAll('pre, code');
+        codeBlocks.forEach(block => {
+            block.classList.add('bg-secondary', 'p-3', 'rounded', 'text-light');
+        });
+
+        // Format paragraphs
+        const paragraphs = contentBody.querySelectorAll('p');
+        paragraphs.forEach(p => {
+            p.style.marginBottom = '1.5rem';
+            p.style.lineHeight = '1.8';
+        });
+
+        // Format headings
+        const headings = contentBody.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        headings.forEach(heading => {
+            heading.style.marginTop = '2rem';
+            heading.style.marginBottom = '1rem';
+            heading.style.color = 'var(--accent-primary)';
+        });
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        {% if prev_section %}
+        if (e.key === 'ArrowLeft' && e.ctrlKey) {
+            window.location.href = '{{ url_for("routes_bp.section_detail", chapter_id=chapter.id, section_id=prev_section.id) }}';
+        }
+        {% endif %}
+        {% if next_section %}
+        if (e.key === 'ArrowRight' && e.ctrlKey) {
+            window.location.href = '{{ url_for("routes_bp.section_detail", chapter_id=chapter.id, section_id=next_section.id) }}';
+        }
+        {% endif %}
+    });
+});
+</script>
+{% endblock %}

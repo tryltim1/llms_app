@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ScriptScope - Educational Content Management{% endblock %}</title>
+    
+    <!-- Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <script>
+    // Show comments in modal for chapter or section
+    function showCommentsFor(type, id) {
+        let endpoint = '';
+        if (type === 'chapter') {
+            endpoint = `/api/chapter_comments/${id}`;
+        } else if (type === 'section') {
+            endpoint = `/api/section_comments/${id}`;
+        } else {
+            return;
+        }
+        fetch(endpoint)
+            .then(response => response.json())
+            .then(comments => {
+                const commentsContainer = document.getElementById('comments-container');
+                if (!comments || comments.length === 0) {
+                    commentsContainer.innerHTML = '<div class="text-center text-muted">No Comments</div>';
+                } else {
+                    commentsContainer.innerHTML = comments.map(function(comment) {
+                        return `<div class="mb-2"><strong>${comment.user_name}</strong>: ${comment.content} <br><small class="text-muted">${comment.created_at}</small></div>`;
+                    }).join('');
+                }
+                var commentModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('commentModal'));
+                commentModal.show();
+            });
+    }
+    </script>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('routes_bp.index') }}">
+                <i class="fas fa-scroll me-2"></i>ScriptScope
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('routes_bp.index') }}">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    {% if session.user_type == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('routes_bp.admin_dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Admin Dashboard
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    {% if session.user_id or session.admin_id %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>{{ session.user_name }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('routes_bp.logout') }}">
+                                <i class="fas fa-sign-out-alt me-1"></i>Logout
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    {% if session.user_id or session.admin_id %}
+    <!-- Comment Modal (moved outside navbar) -->
+    <div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="commentModalLabel">Comments</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="comments-container" class="mb-2"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Removed duplicate showComments function; use showCommentsFor(type, id) only -->
+    {% endif %}
+    <!-- Removed stray endwith tag to fix Jinja2 error -->
+
+    <!-- Main Content -->
+    <main class="page-transition">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="text-gradient">ScriptScope</h5>
+                    <p class="text-muted">Modern educational content management platform with beautiful design and powerful features.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted mb-0">
+                        &copy; 2024 ScriptScope. Made with <i class="fas fa-heart text-danger"></i> and modern web technologies.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
